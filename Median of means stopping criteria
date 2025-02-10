@@ -1,0 +1,224 @@
+
+# Project Idea: Median of means stopping criteria
+## Evaluation: 
+- Difficulty: medium 
+- Techicallity: medium 
+- Effort required: high
+- Chance of publication: high 
+
+
+
+
+The median-of-means (MoM) sampling method has emerged as a robust alternative to traditional mean-based approaches in Quasi-Monte Carlo (QMC) integration, particularly for high-dimensional problems. This technique combines QMC's low-discrepancy sequences with robust statistical aggregation to improve reliability and convergence rates.
+
+---
+
+### 1. Theory, Formulation, and Advantages
+
+#### Core Mechanism
+MoM operates by:
+1. **Splitting** a low-discrepancy sequence (e.g., lattice points or digital nets) into  $k$ batches of $ m $ points each.
+2. **Computing** a QMC estimate for each batch.
+3. **Taking the median** of these $ k $ estimates instead of their mean[3][15][32].
+
+#### Error Convergence Advantages
+- **Traditional QMC**: Achieves $ O\left(\frac{(\log N)^s}{N}\right) $ error bounds for integrals in $ s $-dimensional space, outperforming Monte Carlo's $ O\left(N^{-1/2}\right) $[1][13].
+- **MoM Enhancement**: Reduces sensitivity to rare "bad" batches by leveraging the median's outlier resistance. For analytic functions, MoM achieves **super-polynomial convergence** $ O(N^{-c\log N}) $ with $ c \approx 0.21 $ in 1D[15][29], and similar improvements in higher dimensions[32][35].
+
+#### Key Comparisons
+| Method               | Error Rate (Analytic $ f $) | Robustness to Outliers | High-Dim Performance |
+|----------------------|-------------------------------|------------------------|-----------------------|
+| Mean-of-Means (QMC)  | $ O(N^{-1}) $               | Low                    | Degrades with $ s $ |
+| Median-of-Means (QMC)| $ O(N^{-c\log N}) $         | High                   | Maintains superiority |
+
+The median's **bias stability** (bounded by $ \sigma/\sqrt{k} $ for variance $ \sigma^2 $[14][24]) and **exponential concentration** under finite variance[5][6] make MoM particularly effective when:
+- Integrands have heavy-tailed distributions
+- Randomization in QMC introduces rare but impactful outliers[3][32]
+
+---
+
+### 2. Key Contributors and Works
+#### Stanford Contributors
+- **Art Owen** (Stanford Statistics): Pioneered MoM-QMC theory, showing super-polynomial accuracy for randomized nets[4][15][29].
+- **Zexin Pan** (Collaborator): Co-developed error bounds for 1D and multidimensional cases, proving MoM's superiority over mean aggregation[15][29][35].
+
+#### Broader Collaborators
+- **Pierre L’Ecuyer** (Montréal): Analyzed lattice-based MoM rules[10].
+- **Takashi Goda** (Tokyo): Explored MoM for high-dimensional integrals[3][10].
+- **Matthieu Lerasle** (Paris): Established MoM's theoretical robustness in statistical learning[11][34].
+
+#### Seminal Papers
+1. **Pan & Owen (2023)**: Demonstrated $ O(N^{-c\log N}) $ convergence for analytic functions[15][29].
+2. **Goda & L’Ecuyer (2022)**: Validated MoM efficacy for Keister's integral[3].
+3. **Lecué & Lerasle (2020)**: Generalized MoM to robust machine learning[11].
+
+---
+
+### Synthesis
+MoM sampling addresses two critical QMC challenges:
+1. **Variance Reduction**: Median aggregation suppresses heavy-tailed errors better than mean[5][6][24].
+2. **Dimension Scaling**: Maintains $ (\log N)^s $ error scaling while being less sensitive to sequence quality[1][32].
+
+Recent extensions like **permutation-invariant MoM**[6] and **variance-reduced MoM**[8] further optimize computational stability. This methodology has redefined best practices for integrals in finance, physics, and machine learning where traditional QMC could falter due to randomization effects[3][19][22].
+
+Stopping criteria in Quasi-Monte Carlo (QMC) methods determine when to terminate simulations once a desired accuracy or confidence level is achieved. Unlike traditional Monte Carlo, QMC uses low-discrepancy sequences to reduce integration error, but the deterministic nature of these sequences necessitates specialized stopping rules.
+
+---
+
+### 1. Purpose and Mechanism  
+**Purpose**:  
+- Balance computational effort and precision by halting simulations when the estimated error falls below a predefined tolerance[4][6][14].  
+- Provide probabilistic guarantees (e.g., 95% confidence) that the approximation error is within a specified bound[2][5].  
+
+**Mechanism**:  
+- **Error Estimation**: Track discrepancy-based error bounds (e.g., Koksma-Hlawka inequality[5]) or statistical confidence intervals[4][6].  
+- **Adaptive Sampling**: Dynamically adjust the sample size $ N $ based on variance estimates, discrepancy measures, or replication checks[7][9].  
+- **Convergence Monitoring**: Use criteria like absolute error ($ |\hat{\mu} - \mu| \leq \epsilon $) or relative error ($ |\hat{\mu} - \mu| / |\mu| \leq \epsilon $)[14][6].  
+
+---
+
+### 2. Examples of Stopping Criteria  
+#### **a) CLT-Based Criteria**  
+- **qMC-CLT**: For $ k $ randomizations of a QMC sequence, compute $ k $ estimates $\hat{\mu}_1, \dots, \hat{\mu}_k$, then construct a confidence interval using the Student’s $ t $-distribution:  
+  $
+  P\left(|\hat{\mu} - \mu| \leq t_{k-1,1-\delta/2} \cdot \frac{s}{\sqrt{k}}\right) \geq 1 - \delta
+  $
+  where $ s $ is the sample standard deviation[4][6].  
+
+#### **b) Chebyshev Inequality**  
+- Guarantees:  
+  $
+  P\left(|\hat{\mu} - \mu| \geq \epsilon\right) \leq \frac{\sigma^2}{N\epsilon^2}
+  $
+  Terminate when $ \sigma^2 / (N\epsilon^2) \leq \delta $, for risk tolerance $ \delta $[2][14].  
+
+#### **c) Replication Checks**  
+- Split the QMC sequence into $ m $ batches. Stop when the median (or mean) of batch estimates stabilizes within a tolerance[4][9].  
+
+#### **d) Berry-Esseen Guaranteed Bounds**  
+- For integrands with bounded kurtosis, use finite-sample corrections to CLT:  
+  $
+  |\hat{\mu} - \mu| \leq C \cdot \frac{\sigma}{\sqrt{N}} + \text{lower-order terms}
+  $
+  where $ C $ depends on the kurtosis[4].  
+
+---
+
+### 3. Implementation in Software  
+#### **QMCPy Framework** ([7][9][10]):  
+1. **Define Components**:  
+   ```python
+   import qmcpy as qp
+   discrete_distrib = qp.Lattice(dimension=2)  # Low-discrepancy sequence
+   true_measure = qp.Gaussian(discrete_distrib)  # Underlying distribution
+   integrand = qp.CustomFun(true_measure, my_function)  # Integrand
+   stopping_criterion = qp.CubQMCLatticeG(integrand, abs_tol=1e-3)  # Stopping rule
+   ```
+2. **Dynamic Sampling**:  
+   - Doubles $ N $ iteratively until $ 1.96 \cdot \text{SE} \leq \epsilon $[4][9].  
+3. **Key Classes**:  
+   - **`CubQMC*`**: Implements discrepancy-based stopping for various sequences (e.g., lattices, Sobol’).  
+   - **`CubBayESG`**: Uses Bayesian posterior variance for adaptive stopping[10].  
+
+#### **Implementation Tips**:  
+- **Guard Clauses**: Prevent early termination with warm-up phases (e.g., minimum $ N=100 $)[2].  
+- **Variance Tracking**: Update sample mean/variance incrementally to reduce overhead[2][6].  
+- **Parallelization**: Distribute batch evaluations across multiple cores[4].  
+
+---
+
+### Key Tradeoffs  
+| Criterion          | Strengths                          | Limitations                      |
+|--------------------|------------------------------------|----------------------------------|
+| **CLT**            | Simple, widely applicable          | Assumes asymptotic normality[4]  |
+| **Chebyshev**      | Distribution-free guarantees       | Conservative error bounds[2]     |
+| **Replication**    | Robust to heavy-tailed outputs     | Computationally intensive[9]    |
+| **Berry-Esseen**   | Finite-sample guarantees           | Requires bounded kurtosis[4]    |
+
+---
+
+### Summary  
+Stopping criteria in QMC bridge theoretical error bounds (e.g., $ O(N^{-1}(\log N)^s) $) with practical uncertainty quantification. Methods like qMC-CLT and replication checks are now standard in libraries like **QMCPy**, enabling automated precision control for high-dimensional integrals in finance[3][21], physics[15], and ML[4].
+
+Citations (Stopping Criteria):
+[1] https://hal.science/hal-03631879v3/file/main_HAL_version2.pdf
+[2] https://www.sne-journal.org/fileadmin/user_upload_sne/SNE_Issues_OA/SNE_32_1/articles/sne.32.1.10591.on.OA.pdf
+[3] https://www.soa.org/493622/globalassets/assets/library/monographs/50th-anniversary/investment-section/1999/january/m-as99-2-02.pdf
+[4] https://arxiv.org/html/2502.03644v1
+[5] https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+[6] https://quant.stackexchange.com/questions/21764/stopping-monte-carlo-simulation-once-certain-convergence-level-is-reached
+[7] https://qmcpy.readthedocs.io/en/latest/demo_rst/quickstart.html
+[8] https://sas.uwaterloo.ca/~dlmcleis/s906/chapt6.pdf
+[9] https://qmcpy.org/2020/07/06/a-qmcpy-quick-start/
+[10] https://qmcpy.org
+[11] https://github.com/QMCSoftware/QMCSoftware
+[12] https://epubs.siam.org/doi/10.1137/130911433
+[13] http://www.actuaries.org/AFIR/colloquia/Cairns/Boyle_Tan.pdf
+[14] https://www.researchgate.net/publication/327025111_Monte_Carlo_Simulation_Automatic_Stopping_Criteria_For
+[15] https://wires.onlinelibrary.wiley.com/doi/10.1002/wics.1637
+[16] https://cg.informatik.uni-freiburg.de/intern/seminar/raytracing%20-%20Keller%20-%20Quasi%20Monte%20Carlo.pdf
+[17] https://www.math.pku.edu.cn/teachers/litj/notes/numer_anal/MCQMC_Caflisch.pdf
+[18] https://taylorandfrancis.com/knowledge/Engineering_and_technology/Engineering_support_and_special_topics/quasi-Monte_Carlo_method
+[19] https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+[20] https://www.risk.net/journal-of-risk/7957625/the-importance-of-being-scrambled-supercharged-quasi-monte-carlo
+[21] https://deepblue.lib.umich.edu/bitstream/handle/2027.42/3635/bap3204.0001.001.pdf?sequence=5
+[22] https://artowen.su.domains/mc/qmcstuff.pdf
+[23] https://sas.uwaterloo.ca/~dlmcleis/s906/chapt6.pdf
+[24] https://www-labs.iro.umontreal.ca/~lecuyer/myftp/slides/samsi17-lattice-tutorial.pdf
+[25] https://quant.stackexchange.com/questions/10041/quasi-monte-carlo-in-matlab
+[26] https://qmcpy.readthedocs.io/en/latest/demo_rst/MC_vs_QMC.html
+[27] https://www.soa.org/493622/globalassets/assets/library/monographs/50th-anniversary/investment-section/1999/january/m-as99-2-02.pdf
+[28] https://quant.stackexchange.com/questions/41094/quasi-monte-carlo
+[29] https://artowen.su.domains/reports/siggraph03.pdf
+[30] https://www.pnas.org/doi/10.1073/pnas.0409596102
+[31] https://qmcpy.readthedocs.io/en/latest/
+[32] https://www.iit.edu/events/quasi-monte-carlo-software
+[33] https://arxiv.org/pdf/2102.07833.pdf
+
+
+Citations (Stopping Criteria):
+[1] https://en.wikipedia.org/wiki/Quasi-Monte_Carlo_method
+[2] https://stats.stackexchange.com/questions/47738/median-averaging-and-error-analysis
+[3] https://arxiv.org/html/2501.10440v1
+[4] https://artowen.su.domains/abocv.pdf
+[5] https://faculty.washington.edu/yenchic/short_note/note_MoM.pdf
+[6] https://towardsdatascience.com/mean-estimation-median-of-means-6be322ef8d85/
+[7] https://arxiv.org/html/2502.03644v1
+[8] https://jmlr.csail.mit.edu/papers/volume22/20-950/20-950.pdf
+[9] https://arxiv.org/html/2501.00150v1
+[10] https://www.iro.umontreal.ca/~lecuyer/myftp/papers/median-lattice.pdf
+[11] https://projecteuclid.org/journals/annals-of-statistics/volume-48/issue-2/Robust-machine-learning-by-median-of-means--Theory-and/10.1214/19-AOS1828.pdf
+[12] https://arxiv.org/pdf/2305.18681.pdf
+[13] https://sas.uwaterloo.ca/~dlmcleis/s906/chapt6.pdf
+[14] https://en.wikipedia.org/wiki/Median
+[15] https://arxiv.org/abs/2111.12676
+[16] https://stats.stackexchange.com/questions/533725/how-to-calculate-quasi-monte-carlo-integration-error-when-sampling-with-sobols
+[17] https://www.webpages.uidaho.edu/~stevel/565/literature/qmc_mcem.pdf
+[18] https://www.reddit.com/r/datascience/comments/14g557m/why_is_it_so_common_to_use_averagemean_instead_of/
+[19] https://epubs.siam.org/doi/10.1137/22M1510121
+[20] https://www.soa.org/493622/globalassets/assets/library/monographs/50th-anniversary/investment-section/1999/january/m-as99-2-02.pdf
+[21] https://faculty.washington.edu/yenchic/short_note/note_MoM.pdf
+[22] https://artowen.su.domains/reports/siggraph03.pdf
+[23] https://wires.onlinelibrary.wiley.com/doi/10.1002/wics.1637
+[24] https://datascience.stackexchange.com/questions/46744/when-to-use-mean-vs-median
+[25] https://epubs.siam.org/doi/10.1137/22M1525077
+[26] https://www.math.pku.edu.cn/teachers/litj/notes/numer_anal/MCQMC_Caflisch.pdf
+[27] http://stratigrafia.org/8370/lecturenotes/means.html
+[28] https://purl.stanford.edu/cq043wn8307
+[29] https://arxiv.org/abs/2208.05078
+[30] https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf
+[31] https://measuringu.com/should-you-use-the-mean-or-median-of-the-sus/
+[32] https://par.nsf.gov/servlets/purl/10513780
+[33] https://www-leland.stanford.edu/~glynn/papers/1997/MG97.pdf
+[34] https://lecueguillaume.github.io/assets/MOMKLL.pdf
+[35] https://www.researchgate.net/publication/379938529_Super-polynomial_accuracy_of_multidimensional_randomized_nets_using_the_median-of-means
+[36] https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITP.2024.39
+[37] https://par.nsf.gov/servlets/purl/10332725
+[38] https://www.researchgate.net/publication/356510572_Super-polynomial_accuracy_of_one_dimensional_randomized_nets_using_the_median-of-means
+[39] https://pubmed.ncbi.nlm.nih.gov/33876748/
+[40] https://proceedings.mlr.press/v195/minsker23a/minsker23a.pdf
+
+---
+Answer from Perplexity: pplx.ai/share
+
+> Written with [StackEdit](https://stackedit.io/).
