@@ -17,21 +17,21 @@ The median-of-means (MoM) sampling method has emerged as a robust alternative to
 
 #### Core Mechanism
 MoM operates by:
-1. **Splitting** a low-discrepancy sequence (e.g., lattice points or digital nets) into  $k$ batches of $ m $ points each.
+1. **Splitting** a low-discrepancy sequence (e.g., lattice points or digital nets) into  $k$ batches of $m$ points each.
 2. **Computing** a QMC estimate for each batch.
-3. **Taking the median** of these $ k $ estimates instead of their mean[3][15][32].
+3. **Taking the median** of these $k$ estimates instead of their mean[3][15][32].
 
 #### Error Convergence Advantages
-- **Traditional QMC**: Achieves $ O\left(\frac{(\log N)^s}{N}\right) $ error bounds for integrals in $ s $-dimensional space, outperforming Monte Carlo's $ O\left(N^{-1/2}\right) $[1][13].
-- **MoM Enhancement**: Reduces sensitivity to rare "bad" batches by leveraging the median's outlier resistance. For analytic functions, MoM achieves **super-polynomial convergence** $ O(N^{-c\log N}) $ with $ c \approx 0.21 $ in 1D[15][29], and similar improvements in higher dimensions[32][35].
+- **Traditional QMC**: Achieves $O\left(\frac{(\log N)^s}{N}\right)$ error bounds for integrals in $s$-dimensional space, outperforming Monte Carlo's $O\left(N^{-1/2}\right)$[1][13].
+- **MoM Enhancement**: Reduces sensitivity to rare "bad" batches by leveraging the median's outlier resistance. For analytic functions, MoM achieves **super-polynomial convergence** $O(N^{-c\log N})$ with $c \approx 0.21$ in 1D[15][29], and similar improvements in higher dimensions[32][35].
 
 #### Key Comparisons
-| Method               | Error Rate (Analytic $ f $) | Robustness to Outliers | High-Dim Performance |
+| Method               | Error Rate (Analytic $f$) | Robustness to Outliers | High-Dim Performance |
 |----------------------|-------------------------------|------------------------|-----------------------|
-| Mean-of-Means (QMC)  | $ O(N^{-1}) $               | Low                    | Degrades with $ s $ |
-| Median-of-Means (QMC)| $ O(N^{-c\log N}) $         | High                   | Maintains superiority |
+| Mean-of-Means (QMC)  | $O(N^{-1})$               | Low                    | Degrades with $s$ |
+| Median-of-Means (QMC)| $O(N^{-c\log N})$         | High                   | Maintains superiority |
 
-The median's **bias stability** (bounded by $ \sigma/\sqrt{k} $ for variance $ \sigma^2 $[14][24]) and **exponential concentration** under finite variance[5][6] make MoM particularly effective when:
+The median's **bias stability** (bounded by $\sigma/\sqrt{k}$ for variance $\sigma^2$[14][24]) and **exponential concentration** under finite variance[5][6] make MoM particularly effective when:
 - Integrands have heavy-tailed distributions
 - Randomization in QMC introduces rare but impactful outliers[3][32]
 
@@ -48,7 +48,7 @@ The median's **bias stability** (bounded by $ \sigma/\sqrt{k} $ for variance $ \
 - **Matthieu Lerasle** (Paris): Established MoM's theoretical robustness in statistical learning[11][34].
 
 #### Seminal Papers
-1. **Pan & Owen (2023)**: Demonstrated $ O(N^{-c\log N}) $ convergence for analytic functions[15][29].
+1. **Pan & Owen (2023)**: Demonstrated $O(N^{-c\log N})$ convergence for analytic functions[15][29].
 2. **Goda & L’Ecuyer (2022)**: Validated MoM efficacy for Keister's integral[3].
 3. **Lecué & Lerasle (2020)**: Generalized MoM to robust machine learning[11].
 
@@ -57,7 +57,7 @@ The median's **bias stability** (bounded by $ \sigma/\sqrt{k} $ for variance $ \
 ### Synthesis
 MoM sampling addresses two critical QMC challenges:
 1. **Variance Reduction**: Median aggregation suppresses heavy-tailed errors better than mean[5][6][24].
-2. **Dimension Scaling**: Maintains $ (\log N)^s $ error scaling while being less sensitive to sequence quality[1][32].
+2. **Dimension Scaling**: Maintains $(\log N)^s$ error scaling while being less sensitive to sequence quality[1][32].
 
 Recent extensions like **permutation-invariant MoM**[6] and **variance-reduced MoM**[8] further optimize computational stability. This methodology has redefined best practices for integrals in finance, physics, and machine learning where traditional QMC could falter due to randomization effects[3][19][22].
 
@@ -72,35 +72,35 @@ Stopping criteria in Quasi-Monte Carlo (QMC) methods determine when to terminate
 
 **Mechanism**:  
 - **Error Estimation**: Track discrepancy-based error bounds (e.g., Koksma-Hlawka inequality[5]) or statistical confidence intervals[4][6].  
-- **Adaptive Sampling**: Dynamically adjust the sample size $ N $ based on variance estimates, discrepancy measures, or replication checks[7][9].  
-- **Convergence Monitoring**: Use criteria like absolute error ($ |\hat{\mu} - \mu| \leq \epsilon $) or relative error ($ |\hat{\mu} - \mu| / |\mu| \leq \epsilon $)[14][6].  
+- **Adaptive Sampling**: Dynamically adjust the sample size $N$ based on variance estimates, discrepancy measures, or replication checks[7][9].  
+- **Convergence Monitoring**: Use criteria like absolute error ($|\hat{\mu} - \mu| \leq \epsilon$) or relative error ($|\hat{\mu} - \mu| / |\mu| \leq \epsilon$)[14][6].  
 
 ---
 
 ### 2. Examples of Stopping Criteria  
 #### **a) CLT-Based Criteria**  
-- **qMC-CLT**: For $ k $ randomizations of a QMC sequence, compute $ k $ estimates $\hat{\mu}_1, \dots, \hat{\mu}_k$, then construct a confidence interval using the Student’s $ t $-distribution:  
-  $
+- **qMC-CLT**: For $k$ randomizations of a QMC sequence, compute $k$ estimates $\hat{\mu}_1, \dots, \hat{\mu}_k$, then construct a confidence interval using the Student’s $t$-distribution:  
+  $$
   P\left(|\hat{\mu} - \mu| \leq t_{k-1,1-\delta/2} \cdot \frac{s}{\sqrt{k}}\right) \geq 1 - \delta
-  $
-  where $ s $ is the sample standard deviation[4][6].  
+  $$
+  where $s$ is the sample standard deviation[4][6].  
 
 #### **b) Chebyshev Inequality**  
 - Guarantees:  
-  $
+  $$
   P\left(|\hat{\mu} - \mu| \geq \epsilon\right) \leq \frac{\sigma^2}{N\epsilon^2}
-  $
-  Terminate when $ \sigma^2 / (N\epsilon^2) \leq \delta $, for risk tolerance $ \delta $[2][14].  
+  $$
+  Terminate when $\sigma^2 / (N\epsilon^2) \leq \delta$, for risk tolerance $\delta$[2][14].  
 
 #### **c) Replication Checks**  
-- Split the QMC sequence into $ m $ batches. Stop when the median (or mean) of batch estimates stabilizes within a tolerance[4][9].  
+- Split the QMC sequence into $m$ batches. Stop when the median (or mean) of batch estimates stabilizes within a tolerance[4][9].  
 
 #### **d) Berry-Esseen Guaranteed Bounds**  
 - For integrands with bounded kurtosis, use finite-sample corrections to CLT:  
-  $
+  $$
   |\hat{\mu} - \mu| \leq C \cdot \frac{\sigma}{\sqrt{N}} + \text{lower-order terms}
-  $
-  where $ C $ depends on the kurtosis[4].  
+  $$
+  where $C$ depends on the kurtosis[4].  
 
 ---
 
